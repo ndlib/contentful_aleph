@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Contentful Aleph Role"
+
+Parameters:
+  ServiceName:
+    Type: String
+    Description: The name of the service
+
+Outputs:
+  RoleArn:
+    Description: Role for the Lambda
+    Value: !GetAtt Role.Arn
+
+Resources:
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: "Allow_KMS"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "kms:Decrypt"
+                Resource: !Sub "arn:aws:kms:::alias/${ServiceName}"

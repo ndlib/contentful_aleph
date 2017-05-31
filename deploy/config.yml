@@ -1,0 +1,47 @@
+Service: contentful-aleph
+
+Stacks:
+  Global:
+    Tags:
+      Name: $SERVICE-$STAGE
+      Owner: ${USER}
+      Contact: ${USER}@nd.edu
+  Single:
+    - Name: $SERVICE-$STAGE
+      Template: root.yml
+      Tags:
+        Description: Contentful hook to populate aleph data
+      Parameters:
+        ServiceName: $SERVICE-$STAGE
+        Stage: $STAGE
+        TemplateBucket: $DEPLOY_BUCKET
+        TemplateFolder: $DEPLOY_FOLDER
+
+Artifacts:
+  Templates:
+    - root.yml
+    - roles.yml
+    - kms.yml
+    - lambdas.yml
+    - gateway.yml
+  Zips:
+    -
+      Name: code
+      Files:
+        - ../hesburgh/
+        - ../handler.py
+
+LambdaEnv:
+  Single:
+    - FunctionName: $SERVICE-$STAGE-hook
+      KMSKey: alias/$SERVICE-$STAGE
+      Environment:
+        -
+          Name: ALEPH_URL
+          Value: ${ALEPH_URL}
+        -
+          Name: OAUTH
+          Value: ${OAUTH}
+        -
+          Name: CONTENTFUL_URL
+          Value: ${CONTENTFUL_URL}

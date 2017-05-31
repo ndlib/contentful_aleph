@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Contentful Aleph Hook"
+
+Parameters:
+  ServiceName:
+    Type: String
+    Description: The name of the service
+  RoleArn:
+    Type: String
+    Description: Arn of the execution role
+  SourceBucket:
+    Type: String
+    Description: The bucket the code is in
+  SourceKey:
+    Type: String
+    Description: The path to the code zip
+
+Outputs:
+  HookArn:
+    Description: Hook lambda arn
+    Value: !GetAtt Hook.Arn
+
+Resources:
+  Hook:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${ServiceName}-hook
+      Description: Hook to populate aleph data
+      Runtime: python2.7
+      Handler: handler.hook
+      Timeout: 30
+      Role: !Ref RoleArn
+      Code:
+        S3Bucket: !Ref SourceBucket
+        S3Key: !Ref SourceKey
+
+  HookPermission:
+    DependsOn: Hook
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt Hook.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com

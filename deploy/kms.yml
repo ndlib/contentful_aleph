@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Contentful Aleph Key"
+
+Parameters:
+  ServiceName:
+    Type: String
+    Description: The name of the service
+  RoleArn:
+    Type: String
+    Description: Arn of the execution role
+
+
+Outputs:
+  KeyArn:
+    Description: KMS Arn
+    Value: !GetAtt ServiceKey.Arn
+
+
+Resources:
+  ServiceKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: "KMS Key used for the portalResources service"
+      KeyPolicy:
+        Id: !Ref ServiceName
+        Statement:
+          -
+            Sid: "Enable IAM User Permissions"
+            Effect: "Allow"
+            Principal:
+              AWS: !Ref AWS::AccountId
+            Action:
+              - "kms:*"
+            Resource: "*"
+          -
+            Sid: "Allow access for Key Administrators"
+            Effect: "Allow"
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:role/superAdmin"
+            Action:
+              - "kms:Create*"
+              - "kms:Describe*"
+              - "kms:Enable*"
+              - "kms:List*"
+              - "kms:Put*"
+              - "kms:Update*"
+              - "kms:Revoke*"
+              - "kms:Disable*"
+              - "kms:Get*"
+              - "kms:Delete*"
+              - "kms:TagResource"
+              - "kms:UntagResource"
+              - "kms:ScheduleKeyDeletion"
+              - "kms:CancelKeyDeletion"
+            Resource: "*"
+          -
+            Sid: "Allow use of the key"
+            Effect: "Allow"
+            Principal:
+              AWS: !Ref RoleArn
+            Action:
+              - "kms:Encrypt"
+              - "kms:Decrypt"
+              - "kms:ReEncrypt*"
+              - "kms:GenerateDataKey*"
+              - "kms:DescribeKey"
+            Resource: "*"
+          -
+            Sid: "Allow attachment of persistent resources"
+            Effect: "Allow"
+            Action:
+              - "kms:CreateGrant"
+              - "kms:ListGrants"
+              - "kms:RevokeGrant"
+            Resource: "*"
+            Condition:
+              Bool:
+                kms:GrantIsForAWSResource: "true"
+  ServiceKeyAlias:
+    DependsOn:
+      - ServiceKey
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${ServiceName}"
+      TargetKeyId: !Ref ServiceKey

@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Contentful Aleph Gateway"
+
+Parameters:
+  ServiceName:
+    Type: String
+    Description: The name of the service
+  Stage:
+    Type: String
+    Description: The deployed stage
+  HookArn:
+    Type: String
+    Description: Arn for the Hook Lambda
+
+Resources:
+  GatewayStage:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: Gateway
+    Properties:
+      RestApiId: !Ref Gateway
+      StageName: !Ref Stage
+
+  Gateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Ref ServiceName
+      Description: Update Contentful on webhook
+      Body:
+        swagger: "2.0"
+        schemes:
+        - "https"
+        paths:
+          /hook:
+            post:
+              consumes:
+              - "application/json"
+              produces:
+              - "application/json"
+              responses:
+                "200": {}
+              x-amazon-apigateway-integration:
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HookArn}/invocations'
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+

@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Contentful Aleph Stack"
+
+Parameters:
+  ServiceName:
+    Type: String
+    Description: The name of the service
+  Stage:
+    Type: String
+    Description: The deployed stage
+  TemplateBucket:
+    Type: String
+    Description: Bucket this (and code) is deployed in
+  TemplateFolder:
+    Type: String
+    Description: Location of template files
+
+Resources:
+  RolesStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        Fn::Sub: https://s3.amazonaws.com/${TemplateBucket}/${TemplateFolder}/roles.yml
+      Parameters:
+        ServiceName: !Ref ServiceName
+
+  KeysStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: RolesStack
+    Properties:
+      TemplateURL:
+        Fn::Sub: https://s3.amazonaws.com/${TemplateBucket}/${TemplateFolder}/kms.yml
+      Parameters:
+        ServiceName: !Ref ServiceName
+        RoleArn: !GetAtt RolesStack.Outputs.RoleArn
+
+  LambdasStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: RolesStack
+    Properties:
+      TemplateURL:
+        Fn::Sub: https://s3.amazonaws.com/${TemplateBucket}/${TemplateFolder}/lambdas.yml
+      Parameters:
+        ServiceName: !Ref ServiceName
+        SourceBucket: !Ref TemplateBucket
+        SourceKey: !Sub ${TemplateFolder}/code.zip
+        RoleArn: !GetAtt RolesStack.Outputs.RoleArn
+
+  GatewayStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: LambdasStack
+    Properties:
+      TemplateURL:
+        Fn::Sub: https://s3.amazonaws.com/${TemplateBucket}/${TemplateFolder}/gateway.yml
+      Parameters:
+        ServiceName: !Ref ServiceName
+        Stage: !Ref Stage
+        HookArn: !GetAtt LambdasStack.Outputs.HookArn
