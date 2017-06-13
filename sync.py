@@ -65,7 +65,7 @@ def run(event, context):
         or currentPurl != alephItem.get("purl")):
       alephItem["systemNumber"] = alephNumber
       alephItem["name"] = currentTitle
-      # shared.updateContentful(sysId, item.get("sys", {}).get("version", 1), alephItem)
+      shared.updateContentful(sysId, item.get("sys", {}).get("version", 1), alephItem)
     else:
       heslog.info("Item is the same, not updating")
 
