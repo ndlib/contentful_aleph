@@ -30,6 +30,8 @@ Artifacts:
       Files:
         - ../hesburgh/
         - ../handler.py
+        - ../shared.py
+        - ../sync.py
 
 LambdaEnv:
   Single:
@@ -45,3 +47,19 @@ LambdaEnv:
         -
           Name: CONTENTFUL_URL
           Value: ${CONTENTFUL_URL}
+
+    - FunctionName: $SERVICE-$STAGE-sync
+      KMSKey: alias/$SERVICE-$STAGE
+      Environment:
+        -
+          Name: ALEPH_URL
+          Value: ${ALEPH_URL}
+        -
+          Name: OAUTH
+          Value: ${OAUTH}
+        -
+          Name: CONTENTFUL_URL
+          Value: ${CONTENTFUL_URL}
+        -
+          Name: CONTENTFUL_QUERY_URL
+          Value: ${CONTENTFUL_QUERY_URL}

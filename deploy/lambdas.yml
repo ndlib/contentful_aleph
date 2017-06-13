@@ -41,3 +41,16 @@ Resources:
       FunctionName: !GetAtt Hook.Arn
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
+
+  Sync:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${ServiceName}-sync
+      Description: Sync contentful with aleph
+      Runtime: python2.7
+      Handler: sync.run
+      Timeout: 180
+      Role: !Ref RoleArn
+      Code:
+        S3Bucket: !Ref SourceBucket
+        S3Key: !Ref SourceKey
