@@ -40,7 +40,7 @@ def hook(event, context):
   heslog.addContext(aleph=alephNumber)
   if not alephNumber:
     heslog.error("No Aleph number")
-    return { "statusCode": 422, "body": "No aleph number found" }
+    return { "statusCode": 304, "body": "No aleph number found" }
 
   alephItem = shared.getAleph(alephNumber)
   currentTitle = body.get("fields", {}).get("title", {}).get("en-US")
