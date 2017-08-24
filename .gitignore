@@ -3,5 +3,6 @@
 .serverless
 node-version
 *Env
-hesburgh
 node_modules/
+lib/
+hesburgh_util_pip/

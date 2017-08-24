@@ -28,7 +28,7 @@ Artifacts:
     -
       Name: code
       Files:
-        - ../hesburgh/
+        - ../lib/
         - ../handler.py
         - ../shared.py
         - ../sync.py

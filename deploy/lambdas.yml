@@ -50,7 +50,25 @@ Resources:
       Runtime: python2.7
       Handler: sync.run
       Timeout: 180
+      MemorySize: 1024
       Role: !Ref RoleArn
       Code:
         S3Bucket: !Ref SourceBucket
         S3Key: !Ref SourceKey
+  SyncCron:
+    DependsOn: Sync
+    Type: "AWS::Events::Rule"
+    Properties:
+      Description: Triggers periodic resync of all contentful data
+      ScheduleExpression: "cron(0 4 * * ? *)"
+      Targets:
+        - Arn: !GetAtt Sync.Arn
+          Id: "AlephSyncLambda"
+  SyncCronPermission:
+    DependsOn: SyncCron
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      FunctionName: !GetAtt Sync.Arn
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt SyncCron.Arn
