@@ -43,14 +43,17 @@ def hook(event, context):
     return { "statusCode": 304, "body": "No aleph number found" }
 
   alephItem = shared.getAleph(alephNumber)
-  currentTitle = body.get("fields", {}).get("title", {}).get("en-US")
-  currentDesc = body.get("fields", {}).get("description", {}).get("en-US")
-  currentPurl = body.get("fields", {}).get("purl", {}).get("en-US")
+  fields = body.get("fields", {})
+  currentTitle = fields.get("title", {}).get("en-US")
+  currentDesc = fields.get("description", {}).get("en-US")
+  currentPurl = fields.get("purl", {}).get("en-US")
+  currentPurls = fields.get("purls", {}).get("en-US")
 
   # If anything is different, update it
   #  This should stop a potential infinite update loop
   if (currentDesc != alephItem.get("description")
-      or currentPurl != alephItem.get("purl")):
+      or currentPurl != alephItem.get("purl")
+      or currentPurls != alephItem.get("purls")):
     alephItem["systemNumber"] = alephNumber
     alephItem["name"] = currentTitle
     shared.updateContentful(sysId, body.get("sys", {}).get("version", 1), alephItem)

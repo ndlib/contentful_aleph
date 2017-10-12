@@ -15,13 +15,21 @@ import shared
 import urllib2
 import time
 
-# The contentful calls per second is 10, but that's magically gone away, so do 50 at a time
-concurentItems = 50
+# Issue: the first response that returns the api limit header will have actually gone through
+# successfully - all the subsequent calls will fail until the limit is lifted. This is great
+# except that we're in threads so we don't know if we're the first one to hit the error or not
+# so we retry everything. If we retry a previously successful call we'll now get a version mismatch error
+
+# The contentful calls per second is 10, so do 5 at a time (update + publish = 10 max calls) to get around ^ issue
+concurentItems = 5
+
 
 def updateItem(item):
-  currentTitle = item.get("fields", {}).get("title", {}).get("en-US")
-  currentDesc = item.get("fields", {}).get("description", {}).get("en-US")
-  currentPurl = item.get("fields", {}).get("purl", {}).get("en-US")
+  fields = item.get("fields", {})
+  currentTitle = fields.get("title", {}).get("en-US")
+  currentDesc = fields.get("description", {}).get("en-US")
+  currentPurl = fields.get("purl", {}).get("en-US")
+  currentPurls = fields.get("purls", {}).get("en-US")
 
   alephNumber = item.get("fields", {}).get("alephSystemNumber", {}).get("en-US")
   sysId = item.get('sys', {}).get('id')
@@ -31,11 +39,13 @@ def updateItem(item):
     return None
 
   alephItem = shared.getAleph(alephNumber)
-  # heslog.debug("number: %s, title: %s" % (alephNumber, currentTitle))
-  # heslog.debug(json.dumps(alephItem))
+  if not alephItem:
+    heslog.warn("Couldn't fine item %s" % alephNumber)
+    return None
 
   if (currentDesc != alephItem.get("description")
-      or currentPurl != alephItem.get("purl")):
+      or currentPurl != alephItem.get("purl")
+      or currentPurls != alephItem.get("purls")):
     alephItem["systemNumber"] = alephNumber
     alephItem["name"] = currentTitle
 
@@ -45,8 +55,6 @@ def updateItem(item):
     if not updated:
       return
     shared.publishContentful(sysId, updated.get("sys", {}).get("version", 1))
-  else:
-    heslog.debug("Item is the same, not updating")
 
 
 def run(event, context):
@@ -96,7 +104,7 @@ def run(event, context):
     use = items[:concurentItems]
     items = items[concurentItems:]
 
-    heslog.info("Processing items %s through %s" % (start, start + len(use)))
+    heslog.info("Processing items %s through %s" % (start, start + len(use) - 1))
     start += concurentItems
     timer.start()
     for item in use:
@@ -104,9 +112,8 @@ def run(event, context):
 
     gevent.joinall(threads)
     dt = timer.end()
-    if dt < 1:
-      # sleep to make it less likely we hit the contentful api limit
-      time.sleep(1 - dt)
+    # sleep to make it less likely we hit the contentful api limit
+    time.sleep(1)
 
 
   heslog.info("Returning 200 OK")

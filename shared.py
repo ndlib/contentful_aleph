@@ -9,26 +9,34 @@ def getAleph(alephNumber):
   url = url.replace("<<systemNumber>>", alephNumber)
 
   req = urllib2.Request(url)
-  response = ""
-  try:
-    response = urllib2.urlopen(req)
-  except urllib2.HTTPError as e:
-    heslog.error("%s" % e.code)
-    heslog.error(e.read())
-    return None
-  except urllib2.URLError as e:
-    heslog.error(e.reason)
-    return None
-
-  return json.loads(response.read())
+  return makeRequest(req, "aleph: %s" % alephNumber)
 
 
-def contentfulRetrySleep(headerTime):
-  if headerTime and headerTime > 0:
-    heslog.warn("Hit contentful api limit, sleeping for %s" % headerTime)
-    time.sleep(headerTime)
-    return True
-  return False
+def makeRequest(req, meta):
+  while True:
+    try:
+      response = urllib2.urlopen(req)
+      return json.loads(response.read())
+    except urllib2.HTTPError as e:
+      # aleph likely timed out
+      if e.code == 504:
+        heslog.warn("Got a 504 - request timed out, retrying %s" % meta)
+        continue
+
+      resetHeader = e.headers.get("X-Contentful-RateLimit-Reset")
+      if resetHeader and int(resetHeader) > 0:
+        headerTime = int(resetHeader)
+        heslog.warn("%s Hit contentful api limit, sleeping for %s" % (meta, headerTime))
+        time.sleep(headerTime)
+        continue
+
+      heslog.error("Error code: %s  %s" % (e.code, meta))
+      heslog.error(e.read())
+      return False
+    except urllib2.URLError as e:
+      heslog.error(e.reason)
+      return False
+
 
 def updateContentful(entryId, version, updateInfo):
   heslog.info("Updating %s:%s" % (entryId, version))
@@ -46,9 +54,12 @@ def updateContentful(entryId, version, updateInfo):
       "purl": {
         "en-US": updateInfo.get("purl"),
       },
+      "purls": {
+        "en-US": updateInfo.get("purls"),
+      },
       "alephSystemNumber": {
         "en-US": updateInfo.get("systemNumber"),
-      }
+      },
     }
   }
 
@@ -61,25 +72,8 @@ def updateContentful(entryId, version, updateInfo):
 
   req = urllib2.Request(url, data=json.dumps(data), headers=headers)
   req.get_method = lambda: 'PUT'
+  return makeRequest(req, entryId)
 
-  while True:
-    try:
-      response = urllib2.urlopen(req)
-
-      if contentfulRetrySleep(response.info().getheader("X-Contentful-RateLimit-Reset")):
-        continue
-
-      return json.loads(response.read())
-    except urllib2.HTTPError as e:
-      if contentfulRetrySleep(e.headers.get("X-Contentful-RateLimit-Reset")):
-        continue
-
-      heslog.error("%s" % e.code)
-      heslog.error(e.read())
-      return False
-    except urllib2.URLError as e:
-      heslog.error(e.reason)
-      return False
 
 def publishContentful(entryId, version):
   heslog.info("Publishing %s:%s" % (entryId, version))
@@ -97,22 +91,5 @@ def publishContentful(entryId, version):
 
   req = urllib2.Request(url, headers=headers)
   req.get_method = lambda: 'PUT'
-
-  while True:
-    try:
-      response = urllib2.urlopen(req)
-
-      if contentfulRetrySleep(response.info().getheader("X-Contentful-RateLimit-Reset")):
-        continue
-
-      return True
-    except urllib2.HTTPError as e:
-      if contentfulRetrySleep(e.headers.get("X-Contentful-RateLimit-Reset")):
-        continue
-      heslog.error("%s" % e.code)
-      heslog.error(e.read())
-      return False
-    except urllib2.URLError as e:
-      heslog.error(e.reason)
-      return False
+  return makeRequest(req, entryId)
 
