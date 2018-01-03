@@ -26,10 +26,6 @@ concurentItems = 5
 
 def updateItem(item):
   fields = item.get("fields", {})
-  currentTitle = fields.get("title", {}).get("en-US")
-  currentDesc = fields.get("description", {}).get("en-US")
-  currentPurl = fields.get("purl", {}).get("en-US")
-  currentPurls = fields.get("purls", {}).get("en-US")
 
   alephNumber = item.get("fields", {}).get("alephSystemNumber", {}).get("en-US")
   sysId = item.get('sys', {}).get('id')
@@ -43,15 +39,10 @@ def updateItem(item):
     heslog.warn("Couldn't fine item %s" % alephNumber)
     return None
 
-  if (currentDesc != alephItem.get("description")
-      or currentPurl != alephItem.get("purl")
-      or currentPurls != alephItem.get("purls")):
-    alephItem["systemNumber"] = alephNumber
-    alephItem["name"] = currentTitle
-
+  if shared.isDifferent(alephItem, fields):
     version = item.get("sys", {}).get("version", 1)
 
-    updated = shared.updateContentful(sysId, version, alephItem)
+    updated = shared.updateContentful(sysId, version, alephItem, fields)
     if not updated:
       return
     shared.publishContentful(sysId, updated.get("sys", {}).get("version", 1))

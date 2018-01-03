@@ -4,6 +4,26 @@ import urllib2
 import urllib
 import time
 
+alephToCf = {
+  "name": "title",
+  "description": "description",
+  "purl": "purl",
+  "urls": "urls",
+  "provider": "provider",
+  "publisher": "publisher",
+  "platform": "platform",
+  "includes": "includes",
+  "access": "access",
+}
+
+
+def isDifferent(alephItem, currentItem):
+  for aField, cfField in alephToCf.iteritems():
+    if currentItem.get(cfField, {}).get("en-US") != alephItem.get(aField):
+      return True
+  return False
+
+
 def getAleph(alephNumber):
   url = hesutil.getEnv("ALEPH_URL", throw=True)
   url = url.replace("<<systemNumber>>", alephNumber)
@@ -38,30 +58,20 @@ def makeRequest(req, meta):
       return False
 
 
-def updateContentful(entryId, version, updateInfo):
+def updateContentful(entryId, version, alephItem, currentItem):
   heslog.info("Updating %s:%s" % (entryId, version))
   url = hesutil.getEnv("CONTENTFUL_URL", throw=True)
   url = url.replace("<<entryId>>", entryId)
 
-  data = {
-    "fields": {
-      "title": {
-        "en-US": updateInfo.get("name"),
-      },
-      "description": {
-        "en-US": updateInfo.get("description"),
-      },
-      "purl": {
-        "en-US": updateInfo.get("purl"),
-      },
-      "purls": {
-        "en-US": updateInfo.get("purls"),
-      },
-      "alephSystemNumber": {
-        "en-US": updateInfo.get("systemNumber"),
-      },
-    }
+  fields = {
+    "alephSystemNumber": currentItem.get("alephSystemNumber"),
+    "image": currentItem.get("image"),
   }
+
+  for aField, cfField in alephToCf.iteritems():
+    fields[cfField] = { "en-US": alephItem.get(aField) }
+
+  data = { "fields": fields }
 
   headers = {
     "Content-Type": "application/vnd.contentful.management.v1+json",
