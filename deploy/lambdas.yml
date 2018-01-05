@@ -49,7 +49,7 @@ Resources:
       Description: Sync contentful with aleph
       Runtime: python2.7
       Handler: sync.run
-      Timeout: 180
+      Timeout: 300
       MemorySize: 1024
       Role: !Ref RoleArn
       Code:

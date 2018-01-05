@@ -1,3 +1,8 @@
+import os
+dir_path = os.path.dirname(os.path.realpath(__file__))
+import sys
+sys.path.append(dir_path + "/lib/")
+
 from hesburgh import heslog, hesutil
 import json
 import re
