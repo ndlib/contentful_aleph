@@ -36,7 +36,7 @@ def updateItem(item):
 
   alephItem = shared.getAleph(alephNumber)
   if not alephItem:
-    heslog.warn("Couldn't fine item %s" % alephNumber)
+    heslog.warn("Couldn't find item %s" % alephNumber)
     return None
 
   if shared.isDifferent(alephItem, fields):
