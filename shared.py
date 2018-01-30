@@ -71,9 +71,13 @@ def updateContentful(entryId, version, alephItem, currentItem):
   fields = {
     "alephSystemNumber": currentItem.get("alephSystemNumber"),
     "image": currentItem.get("image"),
+    "title": currentItem.get("title"),
   }
 
   for aField, cfField in alephToCf.iteritems():
+    # Don't overwrite the title field
+    if cfField == "title" and fields[cfField] is not None:
+      continue
     fields[cfField] = { "en-US": alephItem.get(aField) }
 
   data = { "fields": fields }
