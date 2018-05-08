@@ -21,7 +21,6 @@ alephToCf = {
   "access": "access",
 }
 
-
 def isDifferent(alephItem, currentItem):
   for aField, cfField in alephToCf.iteritems():
     if currentItem.get(cfField, {}).get("en-US") != alephItem.get(aField):
@@ -68,15 +67,13 @@ def updateContentful(entryId, version, alephItem, currentItem):
   url = hesutil.getEnv("CONTENTFUL_URL", throw=True)
   url = url.replace("<<entryId>>", entryId)
 
-  fields = {
-    "alephSystemNumber": currentItem.get("alephSystemNumber"),
-    "image": currentItem.get("image"),
-    "title": currentItem.get("title"),
-  }
+  # start with current fields, then overwrite what we want to
+  #   This allows us to add fields to the content type without updating this script
+  fields = currentItem
 
   for aField, cfField in alephToCf.iteritems():
     # Don't overwrite the title field
-    if cfField == "title" and fields[cfField] is not None:
+    if cfField == "title" and fields.get("title") is not None:
       continue
     fields[cfField] = { "en-US": alephItem.get(aField) }
 
