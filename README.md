@@ -13,7 +13,8 @@ only updates contentful when it is a `resource` type and if it is different than
 This project also contians a sync function. This function runs each night and attempts to update
 all contentful resource records with they're correct aleph data. This function *currently times out*
 as there are too many entries for one lambda to get through in 5 minutes - this will need to be changed to be smarter
-at some point.
+at some point. It currently doesn't cause issues, as the order it goes through contentful is random, so it may
+get through all entries given enough days.
 
 ## Deployment
 ### Requires
