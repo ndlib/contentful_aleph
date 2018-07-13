@@ -20,8 +20,6 @@ Stacks:
 Artifacts:
   Templates:
     - root.yml
-    - roles.yml
-    - kms.yml
     - lambdas.yml
     - gateway.yml
   Zips:
@@ -34,9 +32,10 @@ Artifacts:
         - ../sync.py
 
 LambdaEnv:
+  Global:
+    KMSKey: alias/wse/kms/
   Single:
     - FunctionName: $SERVICE-$STAGE-hook
-      KMSKey: alias/$SERVICE-$STAGE
       Environment:
         -
           Name: ALEPH_URL
@@ -49,7 +48,6 @@ LambdaEnv:
           Value: ${CONTENTFUL_URL}
 
     - FunctionName: $SERVICE-$STAGE-sync
-      KMSKey: alias/$SERVICE-$STAGE
       Environment:
         -
           Name: ALEPH_URL
