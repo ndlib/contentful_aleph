@@ -75,7 +75,14 @@ def updateContentful(entryId, version, alephItem, currentItem):
     # Don't overwrite the title field
     if cfField == "title" and fields.get("title") is not None:
       continue
+
     fields[cfField] = { "en-US": alephItem.get(aField) }
+
+  # add the databaseLetter field if it is blank
+  if fields.get("databaseLetter") is None:
+    fields["databaseLetter"] = { "en-US": alephItem.get("name")[0].lower() }
+    if not alephItem.get("name")[0].isalpha():
+      fields["databaseLetter"] = { "en-US": "#" }
 
   data = { "fields": fields }
 
@@ -108,4 +115,3 @@ def publishContentful(entryId, version):
   req = urllib2.Request(url, headers=headers)
   req.get_method = lambda: 'PUT'
   return makeRequest(req, entryId)
-
