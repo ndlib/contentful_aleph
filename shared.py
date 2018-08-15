@@ -80,9 +80,8 @@ def updateContentful(entryId, version, alephItem, currentItem):
 
   # add the databaseLetter field if it is blank
   if fields.get("databaseLetter") is None:
-    databaseLetter = alephItem.get("name")[0].lower()
-    fields["databaseLetter"] = { "en-US": databaseLetter }
-    if not databaseLetter.isalpha():
+    fields["databaseLetter"] = { "en-US": alephItem.get("name")[0].lower() }
+    if not alephItem.get("name")[0].isalpha():
       fields["databaseLetter"] = { "en-US": "#" }
 
   data = { "fields": fields }
