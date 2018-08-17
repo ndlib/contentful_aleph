@@ -23,7 +23,6 @@ import time
 # The contentful calls per second is 10, so do 5 at a time (update + publish = 10 max calls) to get around ^ issue
 concurentItems = 5
 
-
 def updateItem(item):
   fields = item.get("fields", {})
 
@@ -51,44 +50,37 @@ def updateItem(item):
 def run(event, context):
   heslog.addLambdaContext(event, context)
 
-  start = 0
-  total = 100
-
+  # Build request
   headers = {
     "Authorization": "Bearer %s" % hesutil.getEnv("OAUTH", throw=True),
   }
   baseUrl = hesutil.getEnv("CONTENTFUL_QUERY_URL", throw=True)
+  url = baseUrl + "&order=sys.updatedAt&skip=0&limit=1000"
 
+  # Make request
+  req = urllib2.Request(url, headers=headers)
+  response = ""
+  try:
+    response = urllib2.urlopen(req)
+  except urllib2.HTTPError as e:
+    heslog.error("%s" % e.code)
+    heslog.error(e.read())
+    return None
+  except urllib2.URLError as e:
+    heslog.error(e.reason)
+    return None
+
+  # Make list of items
+  responseObj = json.loads(response.read())
   items = []
-  while start < total:
-    url = baseUrl + "&skip=%s" % (start)
-
-    req = urllib2.Request(url, headers=headers)
-    response = ""
-    try:
-      response = urllib2.urlopen(req)
-    except urllib2.HTTPError as e:
-      heslog.error("%s" % e.code)
-      heslog.error(e.read())
-      return None
-    except urllib2.URLError as e:
-      heslog.error(e.reason)
-      return None
-
-    responseObj = json.loads(response.read())
-
-    start = responseObj.get("skip", 0) + responseObj.get("limit", 100)
-    total = responseObj.get("total", 0)
-
-    responseItems = responseObj.get("items", [])
-    for item in responseItems:
-      if item.get("sys", {}).get("archivedAt", None) is None:
-        items.append(item)
-
+  responseItems = responseObj.get("items", [])
+  for item in responseItems:
+    if item.get("sys", {}).get("archivedAt", None) is None:
+      items.append(item)
   heslog.info("Updating %s items" % len(items))
 
+  # Process items
   start = 0
-
   timer = hesutil.Timer()
   while len(items) > 0:
     threads = []

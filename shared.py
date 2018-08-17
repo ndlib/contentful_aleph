@@ -22,6 +22,8 @@ alephToCf = {
 }
 
 def isDifferent(alephItem, currentItem):
+  if currentItem.get("databaseLetter", {}).get("en-US") is None:
+    return True
   for aField, cfField in alephToCf.iteritems():
     if currentItem.get(cfField, {}).get("en-US") != alephItem.get(aField):
       return True
