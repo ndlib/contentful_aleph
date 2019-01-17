@@ -55,7 +55,8 @@ def run(event, context):
     "Authorization": "Bearer %s" % hesutil.getEnv("OAUTH", throw=True),
   }
   baseUrl = hesutil.getEnv("CONTENTFUL_QUERY_URL", throw=True)
-  url = baseUrl + "&order=sys.updatedAt&skip=0&limit=1000"
+  space = hesutil.getEnv("CONTENTFUL_SPACE", throw=True)
+  url = baseUrl.replace("<<spaceId>>", space) + "&order=sys.updatedAt&skip=0&limit=1000"
 
   # Make request
   req = urllib2.Request(url, headers=headers)
