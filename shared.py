@@ -6,7 +6,6 @@ sys.path.append(dir_path + "/lib/")
 from hesburgh import heslog, hesutil
 import json
 import urllib2
-import urllib
 import time
 
 alephToCf = {
@@ -19,6 +18,7 @@ alephToCf = {
   "platform": "platform",
   "includes": "includes",
   "access": "access",
+  "accessNotes": "accessNotes",
 }
 
 def isDifferent(alephItem, currentItem):
@@ -66,8 +66,10 @@ def makeRequest(req, meta):
 
 def updateContentful(entryId, version, alephItem, currentItem):
   heslog.info("Updating %s:%s" % (entryId, version))
+
+  space = hesutil.getEnv("CONTENTFUL_SPACE", throw=True)
   url = hesutil.getEnv("CONTENTFUL_URL", throw=True)
-  url = url.replace("<<entryId>>", entryId)
+  url = url.replace("<<spaceId>>", space).replace("<<entryId>>", entryId)
 
   # start with current fields, then overwrite what we want to
   #   This allows us to add fields to the content type without updating this script
@@ -103,8 +105,9 @@ def updateContentful(entryId, version, alephItem, currentItem):
 def publishContentful(entryId, version):
   heslog.info("Publishing %s:%s" % (entryId, version))
 
+  space = hesutil.getEnv("CONTENTFUL_SPACE", throw=True)
   url = hesutil.getEnv("CONTENTFUL_URL", throw=True)
-  url = url.replace("<<entryId>>", entryId)
+  url = url.replace("<<spaceId>>", space).replace("<<entryId>>", entryId)
   url += "/published"
 
   headers = {

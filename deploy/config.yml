@@ -46,6 +46,9 @@ LambdaEnv:
         -
           Name: CONTENTFUL_URL
           Value: ${CONTENTFUL_URL}
+        -
+          Name: CONTENTFUL_SPACE
+          Value: ${CONTENTFUL_SPACE}
 
     - FunctionName: $SERVICE-$STAGE-sync
       Environment:
@@ -61,3 +64,6 @@ LambdaEnv:
         -
           Name: CONTENTFUL_QUERY_URL
           Value: ${CONTENTFUL_QUERY_URL}
+        -
+          Name: CONTENTFUL_SPACE
+          Value: ${CONTENTFUL_SPACE}
