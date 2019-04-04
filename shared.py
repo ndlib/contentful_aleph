@@ -13,6 +13,7 @@ alephToCf = {
   "description": "description",
   "purl": "purl",
   "urls": "urls",
+  "relatedResources": "relatedResources",
   "provider": "provider",
   "publisher": "publisher",
   "platform": "platform",
