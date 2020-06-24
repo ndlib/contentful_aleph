@@ -13,12 +13,24 @@ Parameters:
     Description: Arn for the Hook Lambda
 
 Resources:
-  GatewayStage:
+  APIGatewayDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn: Gateway
     Properties:
       RestApiId: !Ref Gateway
+
+  APIGatewayStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref Gateway
+      DeploymentId: !Ref APIGatewayDeployment
       StageName: !Ref Stage
+      MethodSettings:
+        - DataTraceEnabled: false
+          HttpMethod: "*"
+          LoggingLevel: ERROR
+          ResourcePath: "/*"
+          MetricsEnabled: true
 
   Gateway:
     Type: AWS::ApiGateway::RestApi
