@@ -1,0 +1,77 @@
+{
+	"info": {
+		"_postman_id": "6b0e3393-3427-4992-a53d-694194847fd2",
+		"name": "Contentful Aleph API - QA",
+		"description": "# Contentful Aleph API\n\nThis collection will run basic smoke tests to ensure that the API is running as expected.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Test Hook Endpoint - Unrecognized Event",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "3990daf0-1c5d-40f4-bd8f-b9abe4ada2fe",
+						"exec": [
+							"// Load the HTML into cheerio, which will let us easily select attributes for testing.",
+							"const $ = cheerio.load(pm.response.text());",
+							"",
+							"pm.test(\"Status code is 422\", function () {",
+							"    pm.response.to.have.status(422);",
+							"});",
+							"pm.test(\"Response time is less than 5000ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{contentfulAlephApiUrl}}/hook",
+					"host": [
+						"{{contentfulAlephApiUrl}}"
+					],
+					"path": [
+						"hook"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "f2f7149a-7ac0-4e30-a8a8-d3dea472a595",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "70c9b6d7-1252-4601-9f62-1141ebb58700",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "afd084d0-db69-4174-8bb0-c59bc705868d",
+			"key": "contentfulAlephApiUrl",
+			"value": ""
+		}
+	],
+	"protocolProfileBehavior": {}
+}

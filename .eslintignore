@@ -1,0 +1,7 @@
+build/**
+coverage/**
+deploy/**
+**/node_modules/**
+public/**
+scripts/**
+test/postman/**
