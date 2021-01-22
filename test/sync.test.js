@@ -1,7 +1,14 @@
+jest.mock('util')
+
 const nock = require('nock')
 const sync = require('../src/sync')
 
 describe('sync', () => {
+  beforeAll(() => {
+    console.log = jest.fn()
+    console.warn = jest.fn()
+  })
+
   const cfGoodItems = [
     {
       sys: {
@@ -63,9 +70,6 @@ describe('sync', () => {
           .query(true)
           .reply(200, {})
       })
-
-      console.log = jest.fn()
-      console.warn = jest.fn()
     })
 
     afterEach(() => {
