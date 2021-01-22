@@ -8,7 +8,7 @@ export LOCAL_DEPLOY=true
 
 # provide some friendly defaults so the user does not need to assuming they are deploying a dev build
 export STAGE=${STAGE:="dev"}
-export STACK_NAME=${STACK_NAME:="contentful_aleph-${STAGE}"}
+export STACK_NAME=${STACK_NAME:="contentful-aleph-${STAGE}"}
 export OWNER=${OWNER:=$(id -un)}
 export CONTACT=${CONTACT:=$OWNER@nd.edu}
 export VERSION=$(git rev-parse HEAD) # used by sentry. Right now we are just using the commit SHA.

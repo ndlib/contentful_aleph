@@ -1,4 +1,5 @@
 const fetch = require('node-fetch')
+const sleep = require('util').promisify(setTimeout)
 const { t: typy } = require('typy')
 const { getAleph, isDifferent, updateContentful, publishContentful } = require('./shared/helpers')
 const { successResponse } = require('./shared/response')
@@ -32,10 +33,49 @@ const updateItem = async (item) => {
 
     const updated = await updateContentful(sysId, version, alephItem, item.fields)
     if (!updated) {
-      return
+      // Return the sysId so we know which records were processed, even though there are no changes
+      return sysId
     }
     return publishContentful(sysId, typy(updated, 'sys.version').safeNumber)
   }
+}
+
+// Process items
+const queueUpdates = async (items, start) => {
+  const promises = []
+  const use = items.slice(start, start + concurrentItems)
+
+  console.log(`Processing items ${start} through ${start + use.length - 1}.`)
+
+  use.forEach(item => {
+    promises.push(updateItem(item))
+  })
+
+  return Promise.allSettled(promises).then(results => {
+    const successful = []
+    const errored = []
+
+    results.forEach(result => {
+      if (result.status === 'fulfilled') {
+        if (result.value) {
+          successful.push(result.value)
+        }
+      } else {
+        const errorObj = result.reason.status
+          ? {
+            url: result.reason.url,
+            status: result.reason.status,
+            statusText: result.reason.statusText,
+          }
+          : result.reason
+        errored.push(errorObj)
+      }
+    })
+    return {
+      successful: successful,
+      errors: errored,
+    }
+  })
 }
 
 module.exports.handler = sentryWrapper(async (event, context, callback) => {
@@ -54,26 +94,22 @@ module.exports.handler = sentryWrapper(async (event, context, callback) => {
 
   console.log(`Updating ${publishedItems.length} items`)
 
-  // Process items
-  const queueUpdates = async (items, start) => {
-    const promises = []
-    const use = items.slice(start, start + concurrentItems)
-
-    console.log(`Processing items ${start} through ${start + use.length - 1}.`)
-
-    use.forEach(item => {
-      promises.push(updateItem(item))
-    })
-
-    // wait before next call to make it less likely we hit the contentful api limit
-    if (start + concurrentItems < items.length) {
-      promises.push(setTimeout(1000, () => queueUpdates(items, start + concurrentItems)))
-    }
-
-    return Promise.all(promises)
+  const promiseResults = {
+    successful: [],
+    errors: [],
   }
 
-  await queueUpdates(publishedItems, 0)
+  let start = 0
+  // wait before next call to make it less likely we hit the contentful api limit
+  while (start < publishedItems.length) {
+    const chunkResults = await queueUpdates(publishedItems, start)
+    console.log('Chunk results:', JSON.stringify(chunkResults, null, 2))
+    promiseResults.successful = promiseResults.successful.concat(chunkResults.successful)
+    promiseResults.errors = promiseResults.errors.concat(chunkResults.errors)
 
-  return successResponse(callback)
+    start += concurrentItems
+    await sleep(1000) // Delay before next iteration to reduce risk of hitting API limits
+  }
+
+  return successResponse(callback, promiseResults, (promiseResults.errors.length > 0 ? 207 : 200))
 })
